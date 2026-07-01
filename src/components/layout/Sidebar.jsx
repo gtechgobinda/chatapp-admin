@@ -7,14 +7,16 @@ import {
   ShieldOff,
   Settings,
   MessagesSquare,
+  FileBarChart2,
 } from "lucide-react";
 
 const NAV = [
-  { to: "/",         icon: LayoutDashboard, label: "Dashboard"       },
-  { to: "/users",    icon: Users,           label: "Users"           },
-  { to: "/messages", icon: MessageSquare,   label: "Messages"        },
-  { to: "/requests", icon: UserPlus,        label: "Friend Requests" },
-  { to: "/blocked",  icon: ShieldOff,       label: "Blocked Users"   },
+  { to: "/",         icon: LayoutDashboard,  label: "Dashboard"       },
+  { to: "/users",    icon: Users,            label: "Users"           },
+  { to: "/messages", icon: MessageSquare,    label: "Messages"        },
+  { to: "/requests", icon: UserPlus,         label: "Friend Requests" },
+  { to: "/blocked",  icon: ShieldOff,        label: "Blocked Users"   },
+  { to: "/reports",  icon: FileBarChart2,    label: "Reports"         },
 ];
 
 export default function Sidebar() {
