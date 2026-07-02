@@ -7,7 +7,7 @@ import {
   ChevronDown, UserCircle2,
 } from "lucide-react";
 import TopBar from "../components/layout/TopBar";
-import { USERS } from "../data/sampleData";
+import { api } from "../lib/api";
 import { generateUserReports } from "../data/generateUserReports";
 import { COLOR_MAP } from "../data/reports";
 
@@ -51,7 +51,7 @@ function StatusCell({ value }) {
 }
 
 // ─── User Picker ─────────────────────────────────────────────────────────────
-function UserPicker({ selected, onSelect }) {
+function UserPicker({ selected, onSelect, users }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const ref = useRef(null);
@@ -64,7 +64,7 @@ function UserPicker({ selected, onSelect }) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const filtered = USERS.filter(
+  const filtered = users.filter(
     (u) =>
       u.fullName.toLowerCase().includes(q.toLowerCase()) ||
       u.email.toLowerCase().includes(q.toLowerCase())
@@ -78,7 +78,7 @@ function UserPicker({ selected, onSelect }) {
       >
         {selected ? (
           <>
-            <img src={selected.profilePic} alt={selected.fullName} className="w-8 h-8 rounded-full border border-gray-200 bg-gray-100 shrink-0" />
+            <img src={selected.profilePic || `https://api.dicebear.com/9.x/avataaars/svg?seed=${selected._id}`} alt={selected.fullName} className="w-8 h-8 rounded-full border border-gray-200 bg-gray-100 shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-gray-900 truncate">{selected.fullName}</p>
               <p className="text-xs text-gray-400 truncate">{selected.email}</p>
@@ -120,7 +120,7 @@ function UserPicker({ selected, onSelect }) {
                   className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-violet-50 transition-colors text-left ${selected?._id === u._id ? "bg-violet-50" : ""}`}
                 >
                   <div className="relative shrink-0">
-                    <img src={u.profilePic} alt={u.fullName} className="w-8 h-8 rounded-full border border-gray-200 bg-gray-100" />
+                    <img src={u.profilePic || `https://api.dicebear.com/9.x/avataaars/svg?seed=${u._id}`} alt={u.fullName} className="w-8 h-8 rounded-full border border-gray-200 bg-gray-100" />
                     <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${u.status === "online" ? "bg-green-400" : "bg-gray-300"}`} />
                   </div>
                   <div className="min-w-0">
@@ -371,9 +371,14 @@ function ReportModal({ report, category, user, onClose }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function ReportsPage() {
+  const [USERS, setUSERS] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedReport, setSelectedReport] = useState(null);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    api.get("/api/admin/users").then(setUSERS).catch(() => {});
+  }, []);
 
   const categories = selectedUser ? generateUserReports(selectedUser) : [];
   const totalReports = categories.reduce((acc, c) => acc + c.reports.length, 0);
@@ -407,7 +412,7 @@ export default function ReportsPage() {
             </div>
           </div>
           <div className="flex-1 flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full">
-            <UserPicker selected={selectedUser} onSelect={(u) => { setSelectedUser(u); setSearch(""); }} />
+            <UserPicker selected={selectedUser} onSelect={(u) => { setSelectedUser(u); setSearch(""); }} users={USERS} />
             {selectedUser && (
               <div className="relative">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />

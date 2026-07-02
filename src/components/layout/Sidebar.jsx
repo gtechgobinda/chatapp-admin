@@ -10,6 +10,7 @@ import {
   FileBarChart2,
   LogOut,
 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 const NAV = [
   { to: "/",         icon: LayoutDashboard, label: "Dashboard"       },
@@ -21,6 +22,8 @@ const NAV = [
 ];
 
 export default function Sidebar() {
+  const { logout } = useAuth();
+
   return (
     <aside className="w-60 min-h-screen bg-white border-r border-gray-200 flex flex-col shrink-0">
       {/* Logo */}
@@ -86,7 +89,10 @@ export default function Sidebar() {
             </>
           )}
         </NavLink>
-        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all">
+        <button
+          onClick={logout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all"
+        >
           <LogOut size={16} className="text-gray-400" />
           Logout
         </button>
