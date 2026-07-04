@@ -373,6 +373,8 @@ function ReportModal({ report, category, user, onClose }) {
 export default function ReportsPage() {
   const [USERS, setUSERS] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [reportData, setReportData] = useState(null);
+  const [loadingReport, setLoadingReport] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
   const [search, setSearch] = useState("");
 
@@ -380,8 +382,21 @@ export default function ReportsPage() {
     api.get("/api/admin/users").then(setUSERS).catch(() => {});
   }, []);
 
-  const categories = selectedUser ? generateUserReports(selectedUser) : [];
+  useEffect(() => {
+    if (!selectedUser) {
+      setReportData(null);
+      return;
+    }
+    setLoadingReport(true);
+    api.get(`/api/admin/users/${selectedUser._id}/report`)
+      .then(setReportData)
+      .catch(() => setReportData(null))
+      .finally(() => setLoadingReport(false));
+  }, [selectedUser]);
+
+  const categories = reportData ? generateUserReports(reportData) : [];
   const totalReports = categories.reduce((acc, c) => acc + c.reports.length, 0);
+  const displayUser = reportData?.user ?? selectedUser;
 
   const filtered = search.trim()
     ? categories.map((cat) => ({
@@ -431,7 +446,11 @@ export default function ReportsPage() {
         </div>
 
         {/* Selected user card */}
-        {selectedUser && <UserCard user={selectedUser} />}
+        {displayUser && <UserCard user={displayUser} />}
+
+        {selectedUser && loadingReport && (
+          <div className="text-center py-10 text-gray-400 text-sm">Loading reports…</div>
+        )}
 
         {/* Empty state */}
         {!selectedUser && (
@@ -486,7 +505,7 @@ export default function ReportsPage() {
           );
         })}
 
-        {selectedUser && filtered.length === 0 && (
+        {selectedUser && !loadingReport && filtered.length === 0 && (
           <div className="text-center py-10 text-gray-400 text-sm">No reports match your search.</div>
         )}
       </div>
@@ -495,7 +514,7 @@ export default function ReportsPage() {
         <ReportModal
           report={selectedReport.report}
           category={selectedReport.category}
-          user={selectedUser}
+          user={displayUser}
           onClose={() => setSelectedReport(null)}
         />
       )}
