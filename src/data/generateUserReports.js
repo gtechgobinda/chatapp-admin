@@ -27,6 +27,22 @@ function preview(message) {
   return "[message]";
 }
 
+function previewText(text) {
+  if (!text) return "[empty]";
+  return text.slice(0, 30) + (text.length > 30 ? "…" : "");
+}
+
+// Expands a message's editHistory into one row per edit event, each showing
+// the exact text before and after that specific edit.
+function editHistoryRows(message, chatWithName) {
+  const history = message.editHistory ?? [];
+  if (!history.length) return [];
+  return history.map((h, i) => {
+    const newText = history[i + 1] ? history[i + 1].text : message.text;
+    return [chatWithName, previewText(h.text), previewText(newText), fmtDate(h.editedAt)];
+  });
+}
+
 // Builds the report categories for a user from real, API-sourced data.
 // Report types with no backend tracking (login history, sessions, AI usage,
 // theme/wallpaper changes) are intentionally omitted rather than faked.
@@ -76,9 +92,9 @@ export function generateUserReports(data) {
   if (!readReceiptRows.length) readReceiptRows.push(["No sent messages", "—", "—", "—"]);
 
   const editedMessages = sentMessages.filter((m) => m.editedAt);
-  const editedRows = editedMessages.length
-    ? editedMessages.map((m) => [preview(m), m.receiverId?.fullName ?? "Unknown", fmtDate(m.createdAt), fmtDate(m.editedAt)])
-    : [["No edited messages", "—", "—", "—"]];
+  const editedRows = editedMessages.flatMap((m) => editHistoryRows(m, m.receiverId?.fullName ?? "Unknown"));
+  const totalEdits = editedRows.length;
+  if (!editedRows.length) editedRows.push(["No edited messages", "—", "—", "—"]);
 
   const deletedMessages = sentMessages.filter((m) => m.deletedForEveryone);
   const deletedRows = deletedMessages.length
@@ -181,10 +197,13 @@ export function generateUserReports(data) {
         {
           id: "edited-messages",
           name: "Edited Messages Report",
-          description: "Messages this user has edited.",
-          summary: `${user.fullName} has edited ${editedMessages.length} message(s).`,
-          rows: [{ label: "Total Edits", value: editedMessages.length }],
-          table: { headers: ["Message Preview", "Chat With", "Sent At", "Edited At"], rows: editedRows },
+          description: "Messages this user has edited, showing previous and new content for each edit.",
+          summary: `${user.fullName} has made ${totalEdits} edit(s) across ${editedMessages.length} message(s).`,
+          rows: [
+            { label: "Messages Edited", value: editedMessages.length },
+            { label: "Total Edits",     value: totalEdits },
+          ],
+          table: { headers: ["Chat With", "Previous Text", "New Text", "Edited At"], rows: editedRows },
         },
         {
           id: "deleted-messages",
